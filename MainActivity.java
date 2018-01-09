@@ -23,8 +23,7 @@ public class MainActivity extends AppCompatActivity {
 
     private static final String[] INITIAL_PERMS={
             Manifest.permission.ACCESS_FINE_LOCATION,
-            Manifest.permission.INTERNET,
-            Manifest.permission.ACCESS_NETWORK_STATE
+            Manifest.permission.INTERNET
     };
 
 
