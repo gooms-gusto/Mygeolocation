@@ -41,12 +41,15 @@ public class MainActivity extends AppCompatActivity implements  LocationListener
     Button _BtnProcess;
     EditText _TxtLattitude;
     EditText _TxtLongittude;
+    EditText _TxtAccuracy;
+    EditText _txtProvider;
+    GoogleApiClient mGoogleApiClient;
     private static final String TAG = "LocationActivity";
     private static final long INTERVAL = 1000 * 10;
     private static final long FASTEST_INTERVAL = 1000 * 5;
     String mLastUpdateTime;
     Location mCurrentLocation;
-
+    LocationRequest mLocationRequest;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -56,6 +59,8 @@ public class MainActivity extends AppCompatActivity implements  LocationListener
         _BtnProcess=(Button)findViewById(R.id._BtnSubmit);
         _TxtLattitude=(EditText)findViewById(R.id._input_lattitude);
         _TxtLongittude=(EditText) findViewById(R.id._input_longittude);
+        _TxtAccuracy=(EditText) findViewById(R.id._input_accuracy);
+        _txtProvider=(EditText) findViewById(R.id._input_provider);
 
 
         _BtnProcess.setOnClickListener(new View.OnClickListener() {
@@ -87,16 +92,24 @@ public class MainActivity extends AppCompatActivity implements  LocationListener
     @Override
     protected void onStart() {
         super.onStart();
+
+        Log.d(TAG, "onStart fired ..............");
+        mGoogleApiClient.connect();
     }
 
     @Override
     protected void onStop() {
         super.onStop();
+
+        Log.d(TAG, "onStop fired ..............");
+        mGoogleApiClient.disconnect();
+        Log.d(TAG, "isConnected ...............: " + mGoogleApiClient.isConnected());
     }
 
     @Override
     public void onConnected(@Nullable Bundle bundle) {
-
+        Log.d(TAG, "onConnected - isConnected ...............: " + mGoogleApiClient.isConnected());
+        startLocationUpdates();
     }
 
     @Override
@@ -114,6 +127,15 @@ public class MainActivity extends AppCompatActivity implements  LocationListener
 
     }
 
+    @Override
+    protected void onResume() {
+        super.onResume();
+
+        if (mGoogleApiClient.isConnected()) {
+            startLocationUpdates();
+            Log.d(TAG, "Location update resumed .....................");
+        }
+    }
 
     private void updateUI() {
         Log.d(TAG, "UI update initiated .............");
@@ -122,17 +144,43 @@ public class MainActivity extends AppCompatActivity implements  LocationListener
             String lng = String.valueOf(mCurrentLocation.getLongitude());
             _TxtLattitude.setText(lat);
             _TxtLongittude.setText(lng);
+            _TxtAccuracy.setText(String.valueOf(mCurrentLocation.getAccuracy()));
+            _txtProvider.setText(mCurrentLocation.getProvider());
 
 
-            tvLocation.setText("At Time: " + mLastUpdateTime + "\n" +
-                    "Latitude: " + lat + "\n" +
-                    "Longitude: " + lng + "\n" +
-                    "Accuracy: " + mCurrentLocation.getAccuracy() + "\n" +
-                    "Provider: " + mCurrentLocation.getProvider());
         } else {
             Log.d(TAG, "location is null ...............");
         }
     }
+
+    private boolean isGooglePlayServicesAvailable() {
+        int status = GooglePlayServicesUtil.isGooglePlayServicesAvailable(this);
+        if (ConnectionResult.SUCCESS == status) {
+            return true;
+        } else {
+            GooglePlayServicesUtil.getErrorDialog(status, this, 0).show();
+            return false;
+        }
+    }
+
+
+    protected void startLocationUpdates() {
+        try {
+            PendingResult<Status> pendingResult = LocationServices.FusedLocationApi.requestLocationUpdates(
+                    mGoogleApiClient, mLocationRequest, this);
+            Log.d(TAG, "Location update started ..............: ");
+        }
+        catch (SecurityException ex){
+            ex.printStackTrace();
+        }
+    }
+
+    protected void stopLocationUpdates() {
+        LocationServices.FusedLocationApi.removeLocationUpdates(
+                mGoogleApiClient, this);
+        Log.d(TAG, "Location update stopped .......................");
+    }
+
 }
 
 
